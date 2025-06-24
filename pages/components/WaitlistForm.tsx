@@ -7,22 +7,20 @@ import { waitlistSchema, WaitlistFormData } from "@/schemas/waitlistSchema";
 import { FaArrowRight } from "react-icons/fa";
 import { MdDone } from "react-icons/md";
 import RoleDropdown from "@/pages/components/RoleDropdown";
+import { useWaitlist } from "@/lib/queries/waitlist";
 
 type WaitlistFormProps = {
   scrollRef?: React.RefObject<HTMLElement | null>;
 };
 
-async function submitWaitlist(data: WaitlistFormData) {
-  return new Promise((resolve) => setTimeout(resolve, 1500));
-}
-
 const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
   const [success, setSuccess] = useState(false);
+  const { mutate: submitWaitlist, isPending, isSuccess, error } = useWaitlist();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors },
     reset,
     setValue,
     watch,
@@ -30,16 +28,21 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
     resolver: zodResolver(waitlistSchema),
   });
 
-const onSubmit = async (data: WaitlistFormData) => {
-  try {
-    await submitWaitlist(data);
-    console.log("Submitted Data:", data);
-    setSuccess(true);
-    reset();
-  } catch (error) {
-    console.error("Submission error:", error);
-  }
-};
+  const onSubmit = async (data: WaitlistFormData) => {
+    try {
+      await submitWaitlist(data, {
+        onSuccess: () => {
+          setSuccess(true);
+          reset();
+        },
+        onError: (err) => {
+          console.error("Submission error:", err);
+        },
+      });
+    } catch (error) {
+      console.error("Submission error:", error);
+    }
+  };
 
   useEffect(() => {
     if (success) {
@@ -62,7 +65,6 @@ const onSubmit = async (data: WaitlistFormData) => {
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-6 w-full sm:px-6 md:px-0"
         >
-          {/* Name */}
           <div className="relative">
             <input
               type="text"
@@ -77,8 +79,6 @@ const onSubmit = async (data: WaitlistFormData) => {
               <p className="text-red-400 text-sm mt-1">{errors.name.message}</p>
             )}
           </div>
-
-          {/* Email */}
           <div className="relative">
             <input
               type="email"
@@ -93,17 +93,17 @@ const onSubmit = async (data: WaitlistFormData) => {
               <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
             )}
           </div>
-
-          {/* Role Dropdown */}
           <RoleDropdown
-            value={watch("role")}
-            onChange={(role) => setValue("role", role)}
-          />
+  value={watch("role")}
+  onChange={(role) => {
+    setValue("role", role, { shouldValidate: true }); 
+  }}
+  error={errors.role?.message}
+/>
           {errors.role && (
             <p className="text-red-400 text-sm mt-1">{errors.role.message}</p>
           )}
 
-          {/* Company */}
           <div className="relative">
             <input
               type="text"
@@ -118,16 +118,14 @@ const onSubmit = async (data: WaitlistFormData) => {
               <p className="text-red-400 text-sm mt-1">{errors.company.message}</p>
             )}
           </div>
-
-          {/* Submit */}
           <button
             type="submit"
-            disabled={isSubmitting || success}
+            disabled={isPending || success}
             className={`relative mt-4 bg-[#A9A6F9] hover:bg-[#8f8be6] text-white font-bold text-lg py-3 rounded-xl transition flex items-center justify-center gap-2 px-6 cursor-pointer ${
-              (isSubmitting || success) && "opacity-70 cursor-not-allowed"
+              (isPending || success) && "opacity-70 cursor-not-allowed"
             }`}
           >
-            {isSubmitting ? (
+            {isPending ? (
               <>
                 <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
                   <circle
@@ -159,6 +157,9 @@ const onSubmit = async (data: WaitlistFormData) => {
               </>
             )}
           </button>
+          {error && (
+            <p className="text-red-400 text-sm mt-1">{error.message}</p>
+          )}
         </form>
       </div>
     </section>
