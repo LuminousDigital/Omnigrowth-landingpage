@@ -1,28 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { waitlistSchema, WaitlistFormData } from "@/schemas/waitlistSchema";
 import { FaArrowRight } from "react-icons/fa";
-import { MdDone } from "react-icons/md";
+import SuccessModal from "@/pages/components/SuccessModal";
 import RoleDropdown from "@/pages/components/RoleDropdown";
+import { useWaitlist } from "@/lib/queries/waitlist";
 
 type WaitlistFormProps = {
   scrollRef?: React.RefObject<HTMLElement | null>;
 };
 
-async function submitWaitlist(data: WaitlistFormData) {
-  return new Promise((resolve) => setTimeout(resolve, 1500));
-}
-
 const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors },
     reset,
     setValue,
     watch,
@@ -30,23 +28,26 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
     resolver: zodResolver(waitlistSchema),
   });
 
-const onSubmit = async (data: WaitlistFormData) => {
-  try {
-    await submitWaitlist(data);
-    console.log("Submitted Data:", data);
-    setSuccess(true);
-    reset();
-  } catch (error) {
-    console.error("Submission error:", error);
-  }
-};
+  const { mutate: submitWaitlist, error } = useWaitlist();
 
-  useEffect(() => {
-    if (success) {
-      const timeout = setTimeout(() => setSuccess(false), 3000);
-      return () => clearTimeout(timeout);
+  const onSubmit = async (data: WaitlistFormData) => {
+    setLoading(true);
+    try {
+      await submitWaitlist(data, {
+        onSuccess: () => {
+          setShowSuccess(true);
+          reset();
+        },
+        onError: (err) => {
+          console.error("Submission error:", err);
+        },
+      });
+    } catch (error) {
+      console.error("Submission error:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [success]);
+  };
 
   return (
     <section ref={scrollRef} className="relative z-10 w-full py-16 scroll-mt-24">
@@ -62,7 +63,6 @@ const onSubmit = async (data: WaitlistFormData) => {
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-6 w-full sm:px-6 md:px-0"
         >
-          {/* Name */}
           <div className="relative">
             <input
               type="text"
@@ -78,7 +78,6 @@ const onSubmit = async (data: WaitlistFormData) => {
             )}
           </div>
 
-          {/* Email */}
           <div className="relative">
             <input
               type="email"
@@ -90,20 +89,23 @@ const onSubmit = async (data: WaitlistFormData) => {
               <FaArrowRight />
             </span>
             {errors.email && (
-              <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
+              <p className="text-red-400 text-sm mt-1">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
-          {/* Role Dropdown */}
           <RoleDropdown
             value={watch("role")}
-            onChange={(role) => setValue("role", role)}
+            onChange={(role) => {
+              setValue("role", role, { shouldValidate: true });
+            }}
+            error={errors.role?.message}
           />
           {errors.role && (
             <p className="text-red-400 text-sm mt-1">{errors.role.message}</p>
           )}
 
-          {/* Company */}
           <div className="relative">
             <input
               type="text"
@@ -115,19 +117,20 @@ const onSubmit = async (data: WaitlistFormData) => {
               <FaArrowRight />
             </span>
             {errors.company && (
-              <p className="text-red-400 text-sm mt-1">{errors.company.message}</p>
+              <p className="text-red-400 text-sm mt-1">
+                {errors.company.message}
+              </p>
             )}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
-            disabled={isSubmitting || success}
+            disabled={loading}
             className={`relative mt-4 bg-[#A9A6F9] hover:bg-[#8f8be6] text-white font-bold text-lg py-3 rounded-xl transition flex items-center justify-center gap-2 px-6 cursor-pointer ${
-              (isSubmitting || success) && "opacity-70 cursor-not-allowed"
+              loading && "opacity-70 cursor-not-allowed"
             }`}
           >
-            {isSubmitting ? (
+            {loading ? (
               <>
                 <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
                   <circle
@@ -145,22 +148,25 @@ const onSubmit = async (data: WaitlistFormData) => {
                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                   />
                 </svg>
-                Joining...
-              </>
-            ) : success ? (
-              <>
-                Thanks for Joining Waitlist!
-                <MdDone className="text-2xl" />
+                <span className="ml-2">Submitting...</span>
               </>
             ) : (
               <>
                 Join Waitlist
-                <FaArrowRight className="text-white text-xl" />
+                <FaArrowRight className="text-white text-xl cursor-pointer" />
               </>
             )}
           </button>
+
+          {error && (
+            <p className="text-red-400 text-sm mt-1">
+              {error.message || "Something went wrong."}
+            </p>
+          )}
         </form>
       </div>
+
+      <SuccessModal open={showSuccess} onClose={() => setShowSuccess(false)} />
     </section>
   );
 };

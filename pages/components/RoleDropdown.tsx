@@ -6,12 +6,15 @@ const roles = ["Founder", "Developer", "Designer", "Marketer", "Other"];
 export default function RoleDropdown({
   value,
   onChange,
+  error,
 }: {
-  value: string;
+  value?: string;
   onChange: (role: string) => void;
+  error?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node))
@@ -23,21 +26,18 @@ export default function RoleDropdown({
 
   return (
     <div ref={ref} className="relative w-full">
-      <label
-        className={`absolute left-0 px-1 transition-all duration-200 pointer-events-none
-          ${
-            open || value
-              ? "text-[#b0b0b0] text-base -top-6 scale-90"
-              : "text-[#b0b0b0] text-lg top-3 scale-100"
-          }
-        `}
-      ></label>
       <button
         type="button"
         className={`
-          w-full text-left bg-transparent border-b border-[#b0b0b0] py-3 pr-10 pl-0 text-white
+          w-full text-left bg-transparent border-b py-3 pr-10 pl-0 text-white
           rounded-t-xl focus:outline-none transition-colors duration-200
-          ${open ? "border-[#a259ff] shadow-[0_2px_0_0_#a259ff]" : ""}
+          ${
+            open 
+              ? "border-[#a259ff] shadow-[0_2px_0_0_#a259ff]" 
+              : error 
+                ? "border-red-400" 
+                : "border-[#b0b0b0]"
+          }
         `}
         onClick={() => setOpen((v) => !v)}
         tabIndex={0}
@@ -50,21 +50,11 @@ export default function RoleDropdown({
           {value || "Role"}
         </span>
         <span className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-[#b0b0b0] transition-transform duration-200"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={3}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          <MdKeyboardArrowDown 
+            className={`h-6 w-6 transition-transform duration-200 ${
+              open ? "rotate-180 text-[#a259ff]" : error ? "text-red-400" : "text-[#b0b0b0]"
+            }`}
+          />
         </span>
       </button>
       <div
@@ -100,6 +90,9 @@ export default function RoleDropdown({
           </div>
         ))}
       </div>
+      {/* {error && (
+        <p className="text-red-400 text-sm mt-1">{error}</p>
+      )} */}
     </div>
   );
 }
