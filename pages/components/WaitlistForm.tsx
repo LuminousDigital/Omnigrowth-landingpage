@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { waitlistSchema, WaitlistFormData } from "@/schemas/waitlistSchema";
 import { FaArrowRight } from "react-icons/fa";
-import { MdDone } from "react-icons/md";
+import SuccessModal from "@/pages/components/SuccessModal";
 import RoleDropdown from "@/pages/components/RoleDropdown";
 import { useWaitlist } from "@/lib/queries/waitlist";
 
@@ -14,8 +14,8 @@ type WaitlistFormProps = {
 };
 
 const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
-  const [success, setSuccess] = useState(false);
-  const { mutate: submitWaitlist, isPending, isSuccess, error } = useWaitlist();
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const {
     register,
@@ -28,11 +28,14 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
     resolver: zodResolver(waitlistSchema),
   });
 
+  const { mutate: submitWaitlist, error } = useWaitlist();
+
   const onSubmit = async (data: WaitlistFormData) => {
+    setLoading(true);
     try {
       await submitWaitlist(data, {
         onSuccess: () => {
-          setSuccess(true);
+          setShowSuccess(true);
           reset();
         },
         onError: (err) => {
@@ -41,21 +44,13 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
       });
     } catch (error) {
       console.error("Submission error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (success) {
-      const timeout = setTimeout(() => setSuccess(false), 3000);
-      return () => clearTimeout(timeout);
-    }
-  }, [success]);
-
   return (
-    <section
-      ref={scrollRef}
-      className="relative z-10 w-full py-16 scroll-mt-24"
-    >
+    <section ref={scrollRef} className="relative z-10 w-full py-16 scroll-mt-24">
       <div className="w-full">
         <h2 className="text-[20px] sm:text-[36px] leading-[24px] font-bold text-white tracking-normal text-left">
           Get Early Access
@@ -82,6 +77,7 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
               <p className="text-red-400 text-sm mt-1">{errors.name.message}</p>
             )}
           </div>
+
           <div className="relative">
             <input
               type="email"
@@ -98,6 +94,7 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
               </p>
             )}
           </div>
+
           <RoleDropdown
             value={watch("role")}
             onChange={(role) => {
@@ -125,19 +122,17 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
               </p>
             )}
           </div>
+
           <button
             type="submit"
-            disabled={isPending || success}
+            disabled={loading}
             className={`relative mt-4 bg-[#A9A6F9] hover:bg-[#8f8be6] text-white font-bold text-lg py-3 rounded-xl transition flex items-center justify-center gap-2 px-6 cursor-pointer ${
-              (isPending || success) && "opacity-70 cursor-not-allowed"
+              loading && "opacity-70 cursor-not-allowed"
             }`}
           >
-            {isPending ? (
+            {loading ? (
               <>
-                <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
                   <circle
                     className="opacity-25"
                     cx="12"
@@ -153,25 +148,25 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                   />
                 </svg>
-                Joining...
-              </>
-            ) : success ? (
-              <>
-                Thanks for Joining Waitlist!
-                <MdDone className="text-2xl" />
+                <span className="ml-2">Submitting...</span>
               </>
             ) : (
               <>
                 Join Waitlist
-                <FaArrowRight className="text-white text-xl" />
+                <FaArrowRight className="text-white text-xl cursor-pointer" />
               </>
             )}
           </button>
+
           {error && (
-            <p className="text-red-400 text-sm mt-1">{error.message}</p>
+            <p className="text-red-400 text-sm mt-1">
+              {error.message || "Something went wrong."}
+            </p>
           )}
         </form>
       </div>
+
+      <SuccessModal open={showSuccess} onClose={() => setShowSuccess(false)} />
     </section>
   );
 };

@@ -11,11 +11,11 @@ export default function App({ Component, pageProps }: AppProps) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        retry: 1, // Retry failed queries once
-        staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+        retry: 1,
+        staleTime: 5 * 60 * 1000,
       },
       mutations: {
-        retry: 1, // Retry failed mutations once
+        retry: 1,
       },
     },
   }));

@@ -10,7 +10,7 @@ type HeroProps = {
 
 const Hero = ({ onScrollToWaitlist }: HeroProps) => {
   return (
-    <section className="relative z-10 flex justify-between items-center w-full pt-13 mb-10">
+    <section className="relative z-10 flex justify-between items-center w-full pt-13 mb-10 max-w-[115rem]">
       <div className="flex flex-col gap-2 sm:gap-2 pt-5 lg:pt-1">
         <h1
           className="text-[22px] sm:text-[34px] md:text-[28px] lg:text-[30px] xl:text-[42px] font-bold leading-snug text-white mb-3 lg:mb-0"
@@ -28,7 +28,7 @@ const Hero = ({ onScrollToWaitlist }: HeroProps) => {
         <div>
           <button
             onClick={onScrollToWaitlist}
-            className=" relative flex items-center gap-2 bg-[#B0B0B0]/30 hover:bg-[#A0A0A0]/30 text-white text-[15px] sm:text-[16px] md:text-[25px] lg:text-[22px] font-semibold px-6 smpx-12lg:px-10 lg:py-2 py-3 sm:py-1 rounded-2xl shadow transition cursor-pointer "
+            className="relative flex items-center gap-2 bg-[#B0B0B0]/30 hover:bg-[#A0A0A0]/30 text-white text-[15px] sm:text-[16px] md:text-[25px] lg:text-[22px] font-semibold px-6 sm:px-12 lg:px-10 lg:py-2 py-3 sm:py-1 rounded-2xl shadow transition cursor-pointer"
             style={{ fontFamily: "Satoshi, sans-serif" }}
           >
             Join Waitlist
