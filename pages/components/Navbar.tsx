@@ -7,7 +7,7 @@ import faceIcon from "@/public/faceIcon.png";
 
 const Navbar = () => {
   return (
-    <nav className="relative z-10 flex items-center w-full pt-5 font-sans">
+    <nav className="relative z-10 flex items-center w-full pt-5 font-sans max-w-[110rem]">
       <div className="relative w-[80px] sm:w-[95px] md:w-[95px] lg:w-[100px] h-10">
         <Image
           src={logo}
