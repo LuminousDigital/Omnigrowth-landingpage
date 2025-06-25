@@ -1,15 +1,6 @@
 "use client";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { MdDone } from "react-icons/md";
+import { useEffect } from "react";
 
 interface SuccessModalProps {
   open: boolean;
@@ -17,31 +8,35 @@ interface SuccessModalProps {
 }
 
 export default function SuccessModal({ open, onClose }: SuccessModalProps) {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="text-center px-4 py-6 sm:px-6 sm:py-8 w-full max-w-xs sm:max-w-sm">
-        <DialogHeader>
-          <div className="flex flex-col items-center gap-2">
-            <MdDone className="text-green-500 text-3xl sm:text-4xl" />
-            <DialogTitle className="text-lg sm:text-xl font-semibold text-green-500">
-              You're on the list!
-            </DialogTitle>
-            <DialogDescription className="text-sm sm:text-base text-muted-foreground mt-1">
-              Thanks for joining the waitlist.
-            </DialogDescription>
-          </div>
-        </DialogHeader>
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (open) document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [open, onClose]);
 
-        <DialogFooter className="mt-6">
-          <Button
-            onClick={onClose}
-            variant={null} // disables shadcn preset styles
-            className="mx-auto bg-[#606060] hover:bg-[#4b4a64] px-5 py-2 text-sm sm:text-base cursor-pointer text-white font-semibold rounded-lg transition-colors"
-          >
-            Okay
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="bg-white rounded-xl max-w-sm w-full text-center py-8 px-6 shadow-lg">
+        <div className="flex flex-col items-center gap-2">
+          <MdDone className="text-green-500 text-4xl" />
+          <h2 className="text-xl font-semibold text-green-600">
+            You're on the list!
+          </h2>
+          <p className="text-sm text-gray-600 mt-1">
+            Thanks for joining the waitlist. We’ll keep you updated!
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          className="mt-6 bg-[#606060] hover:bg-[#4b4a64] px-5 py-2 text-sm sm:text-base cursor-pointer text-white font-semibold rounded-lg transition-colors"
+        >
+          Okay
+        </button>
+      </div>
+    </div>
   );
 }

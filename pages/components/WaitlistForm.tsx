@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FaArrowRight } from "react-icons/fa";
-import RoleDropdown from "@/pages/components/RoleDropdown";
-import SuccessModal from "@/pages/components/SuccessModal";
 import { waitlistSchema, WaitlistFormData } from "@/schemas/waitlistSchema";
-
+import { FaArrowRight } from "react-icons/fa";
+import SuccessModal from "@/pages/components/SuccessModal";
+import RoleDropdown from "@/pages/components/RoleDropdown";
+import { useWaitlist } from "@/lib/queries/waitlist";
 
 type WaitlistFormProps = {
   scrollRef?: React.RefObject<HTMLElement | null>;
@@ -28,12 +28,20 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
     resolver: zodResolver(waitlistSchema),
   });
 
+  const { mutate: submitWaitlist, error } = useWaitlist();
+
   const onSubmit = async (data: WaitlistFormData) => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setShowSuccess(true);
-      reset();
+      await submitWaitlist(data, {
+        onSuccess: () => {
+          setShowSuccess(true);
+          reset();
+        },
+        onError: (err) => {
+          console.error("Submission error:", err);
+        },
+      });
     } catch (error) {
       console.error("Submission error:", error);
     } finally {
@@ -42,10 +50,7 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
   };
 
   return (
-    <section
-      ref={scrollRef}
-      className="relative z-10 w-full py-16 scroll-mt-24"
-    >
+    <section ref={scrollRef} className="relative z-10 w-full py-16 scroll-mt-24">
       <div className="w-full">
         <h2 className="text-[20px] sm:text-[36px] leading-[24px] font-bold text-white tracking-normal text-left">
           Get Early Access
@@ -127,10 +132,7 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
           >
             {loading ? (
               <>
-                <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
                   <circle
                     className="opacity-25"
                     cx="12"
@@ -151,10 +153,16 @@ const WaitlistForm = ({ scrollRef }: WaitlistFormProps) => {
             ) : (
               <>
                 Join Waitlist
-                <FaArrowRight className="text-white text-xl" />
+                <FaArrowRight className="text-white text-xl cursor-pointer" />
               </>
             )}
           </button>
+
+          {error && (
+            <p className="text-red-400 text-sm mt-1">
+              {error.message || "Something went wrong."}
+            </p>
+          )}
         </form>
       </div>
 
